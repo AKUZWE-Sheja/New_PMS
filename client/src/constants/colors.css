@@ -1,0 +1,12 @@
+:root {
+    --teal-main: #26A69A;
+    --teal-dark: #00897B;
+    --teal-light: #4DB6AC;
+    --orange-accent: #F57C00;
+    --white: #FFFFFF;
+    --light-gray: #F5F5F5;
+    --medium-gray: #E0E0E0;
+    --dark-gray: #424242;
+    --error-red: #D32F2F;
+    --success-green: #4CAF50;
+    --warning-amber: #FFB300; }

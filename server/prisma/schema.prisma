@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum VehicleType {
+  CAR
+  TRUCK
+  MOTORBIKE
+  VAN
+}
+
+enum VehicleSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum SlotStatus {
+  available
+  occupied
+  reserved
+}
+
+enum RequestStatus {
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(user)
+  isVerified   Boolean       @default(false)
+  otp          String?
+  otpExpiresAt DateTime?
+  vehicles     Vehicle[]
+  slotRequests SlotRequest[]
+  logs         Log[]
+}
+
+model Vehicle {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plateNumber     String        @unique
+  vehicleType     VehicleType
+  size            VehicleSize
+  otherAttributes Json          @default("{}")
+  slotRequests    SlotRequest[]
+}
+
+model ParkingSlot {
+  id           Int           @id @default(autoincrement())
+  slotNumber   String        @unique
+  size         VehicleSize
+  vehicleType  VehicleType
+  status       SlotStatus    @default(available)
+  location     String
+  slotRequests SlotRequest[]
+}
+
+model SlotRequest {
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleId     Int
+  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  slotId        Int?
+  slot          ParkingSlot?  @relation(fields: [slotId], references: [id])
+  slotNumber    String?
+  requestStatus RequestStatus @default(pending)
+  startTime     DateTime      // User-specified parking start time
+  endTime       DateTime      // User-specified parking end time
+  cost          Float?        // Calculated cost in FRW (300 FRW per 30 minutes)
+  approvedAt    DateTime?     // Approval timestamp
+  createdAt     DateTime      @default(now())
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  createdAt DateTime @default(now())
+}
