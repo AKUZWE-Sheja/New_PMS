@@ -1,6 +1,9 @@
+// src/components/Dashboard.jsx
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import Navbar from '../components/Navbar';
 import { getUsers, getVehicles, getParkingSlots, getSlotRequests } from '../services/api';
+import { RequestStatus } from '../types'; // Import enum
 import ErrorMessage from '../utils/error-msg';
 import { FaUsers, FaCar, FaParking, FaListAlt, FaCalendarAlt } from 'react-icons/fa';
 import { IoMdCheckmarkCircle, IoMdCloseCircle, IoMdTime } from 'react-icons/io';
@@ -9,7 +12,6 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ users: 0, vehicles: 0, slots: 0, requests: 0 });
   const [recentRequests, setRecentRequests] = useState([]);
   const [errors, setErrors] = useState({ api: '' });
-  // eslint-disable-next-line no-unused-vars
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
@@ -17,23 +19,23 @@ export default function Dashboard() {
 
     const fetchData = async () => {
       try {
-        // console.log('Fetching data with token:', localStorage.getItem('token')); //debugging
+        console.log('Fetching dashboard data with user:', user);
         const [users, vehicles, slots, requests] = await Promise.all([
           getUsers({ page: 1, limit: 1 }).catch(err => {
             console.log('getUsers failed:', err.response?.data || err.message);
-            throw err;
+            throw new Error('Failed to fetch users');
           }),
           getVehicles({ page: 1, limit: 1 }).catch(err => {
             console.log('getVehicles failed:', err.response?.data || err.message);
-            throw err;
+            throw new Error('Failed to fetch vehicles');
           }),
           getParkingSlots({ page: 1, limit: 1 }).catch(err => {
             console.log('getParkingSlots failed:', err.response?.data || err.message);
-            throw err;
+            throw new Error('Failed to fetch parking slots');
           }),
           getSlotRequests({ page: 1, limit: 1 }).catch(err => {
             console.log('getSlotRequests failed:', err.response?.data || err.message);
-            throw err;
+            throw new Error('Failed to fetch slot requests');
           }),
         ]);
         if (isMounted) {
@@ -45,15 +47,17 @@ export default function Dashboard() {
           });
           const { data } = await getSlotRequests({ page: 1, limit: 5 }).catch(err => {
             console.log('getSlotRequests (recent) failed:', err.response?.data || err.message);
-            throw err;
+            throw new Error('Failed to fetch recent requests');
           });
           setRecentRequests(data || []);
           setErrors({ api: '' });
         }
       } catch (error) {
         if (isMounted) {
-          console.log('Fetch data error:', error.response?.data || error.message);
-          setErrors({ api: error.response?.data?.error || 'Failed to load data' });
+          console.error('Fetch data error:', error.message || error);
+          const errorMessage = error.message || 'Failed to load dashboard data';
+          setErrors({ api: errorMessage });
+          toast.error(errorMessage);
         }
       }
     };
@@ -62,30 +66,38 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
 
-    // styling requests' status
+  // Styling requests' status
   const StatusBadge = ({ status }) => {
-    switch(status) {
-      case 'approved':
+    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
+    switch (status) {
+      case RequestStatus.APPROVED:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className={`${baseClasses} bg-green-100 text-green-800`}>
             <IoMdCheckmarkCircle className="mr-1" />
             Approved
           </span>
         );
-      case 'rejected':
+      case RequestStatus.REJECTED:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className={`${baseClasses} bg-red-100 text-red-800`}>
             <IoMdCloseCircle className="mr-1" />
             Rejected
           </span>
         );
-      default:
+      case RequestStatus.PENDING:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+          <span className={`${baseClasses} bg-amber-100 text-amber-800`}>
             <IoMdTime className="mr-1" />
             Pending
+          </span>
+        );
+      default:
+        return (
+          <span className={`${baseClasses} bg-gray-100 text-gray-800`}>
+            <IoMdTime className="mr-1" />
+            Unknown
           </span>
         );
     }
@@ -97,8 +109,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 border-b border-gray-200 pb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <ErrorMessage message={errors.api} />      
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">Overview of your parking management system</p>
         </div>
 
@@ -148,53 +159,55 @@ export default function Dashboard() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-  <tr>
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      User Email
-    </th>
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Vehicle
-    </th>
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Slot
-    </th>
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Status
-    </th>
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      <div className="flex items-center">
-        <FaCalendarAlt className="mr-1" />
-        Date
-      </div>
-    </th>
-  </tr>
-</thead>
-<tbody className="bg-white divide-y divide-gray-200">
-  {recentRequests.map((req) => (
-    <tr key={req.id} className="hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {req.user?.email || 'N/A'}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {req.vehicle?.plateNumber || 'N/A'} ({req.vehicle?.vehicleType || 'N/A'})
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {req.slotNumber || 'Not Assigned'}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm">
-        <StatusBadge status={req.requestStatus} />
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'N/A'}
-      </td>
-    </tr>
-  ))}
-</tbody>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User Email
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vehicle
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Slot
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">
+                        <FaCalendarAlt className="mr-1" />
+                        Date
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {recentRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {req.user?.email || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {req.vehicle?.plateNumber || 'N/A'} ({req.vehicle?.vehicleType || 'N/A'})
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {req.slotNumber || 'Not Assigned'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <StatusBadge status={req.requestStatus} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}
         </div>
+
+        <div></div>
       </div>
     </div>
   );

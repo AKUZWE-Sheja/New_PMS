@@ -14,32 +14,52 @@ export default function SlotRequests() {
   const [search, setSearch] = useState('');
   const [errors, setErrors] = useState({ api: '' });
 
-  const fetchRequests = useCallback(async (query = '') => {
-    try {
-      const { sanitized, isValid } = sanitizeSearchQuery(query);
-      if (!isValid && query) {
-        toast.error('Invalid search query');
-        return;
-      }
-      const response = await getSlotRequests({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: sanitized,
-      });
-      const { data, pagination: pag } = response;
-      setRequests(data || []);
-      setPagination(pag || { page: 1, limit: 10, total: 0, pages: 1 });
-      setErrors({ api: '' });
-      if (!data?.length && sanitized) {
-        toast.info('No slot requests found for your search');
-      }
-    } catch (error) {
-      console.error('API Error:', error);
-      setErrors({ api: error.response?.data?.error || 'Failed to load requests' });
-      setPagination({ page: 1, limit: 10, total: 0, pages: 1 });
-      setRequests([]);
+// src/components/SlotRequests.jsx (partial)
+const fetchRequests = useCallback(async (query = '') => {
+  try {
+    const { sanitized, isValid } = sanitizeSearchQuery(query);
+    if (!isValid && query) {
+      toast.error('Invalid search query');
+      return;
     }
-  }, [pagination.page, pagination.limit]);
+    console.log('Fetching slot requests with params:', { page: pagination.page, limit: pagination.limit, search: sanitized });
+    const response = await getSlotRequests({
+      page: pagination.page,
+      limit: pagination.limit,
+      search: sanitized,
+    });
+    console.log('Slot requests response:', response);
+    setRequests(response.data || []);
+    setPagination({
+      page: Number(response.meta?.currentPage) || 1,
+      limit: Number(response.meta?.limit) || 10,
+      total: Number(response.meta?.totalItems) || 0,
+      pages: Number(response.meta?.totalPages) || 1,
+    });
+    setErrors({ api: '' });
+    if (!response.data?.length && sanitized) {
+      toast.info('No slot requests found for your search');
+    }
+  } catch (error) {
+    console.error('API Error:', error);
+    const status = error.response?.status;
+    let errorMessage = error.response?.data?.error || 'Failed to load requests';
+    if (status === 403) {
+      errorMessage = 'Access denied: Admin privileges required';
+      toast.error(errorMessage);
+    } else if (status === 401) {
+      errorMessage = 'Session expired. Please log in again.';
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    } else {
+      toast.error(errorMessage);
+    }
+    setErrors({ api: errorMessage });
+    setPagination({ page: 1, limit: 10, total: 0, pages: 1 });
+    setRequests([]);
+  }
+}, [pagination.page, pagination.limit]);
 
   useEffect(() => {
     let isMounted = true;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createRequest, getRequests, updateRequest, deleteRequest, approveRequest, rejectRequest } from '../controllers/requestController';
+import { createRequest, getRequests, updateRequest, deleteRequest, approveRequest, rejectRequest, exitRequest } from '../controllers/requestController';
 import { authenticate, isAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -299,5 +299,50 @@ router.post('/:id/approve', authenticate, isAdmin, approveRequest);
  *       500: { description: Server error }
  */
 router.post('/:id/reject', authenticate, isAdmin, rejectRequest);
+
+/**
+ * @swagger
+ * /api/slot-requests/{id}/exit:
+ *   post:
+ *     summary: Mark a car as exited, set end time, and calculate cost
+ *     tags: [Slot Requests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the slot request
+ *     responses:
+ *       200:
+ *         description: Exit processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: integer }
+ *                     userId: { type: integer }
+ *                     vehicleId: { type: integer }
+ *                     slotId: { type: integer }
+ *                     slotNumber: { type: string }
+ *                     startTime: { type: string, format: date-time }
+ *                     endTime: { type: string, format: date-time }
+ *                     cost: { type: number }
+ *                     requestStatus: { type: string }
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Request or slot not found, or not started
+ *       500:
+ *         description: Server error
+ */
+router.post('/:id/exit', authenticate, exitRequest);
+
 
 export default router;

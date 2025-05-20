@@ -8,7 +8,7 @@ datasource db {
 }
 
 enum Role {
-  user
+  parking_attendant
   admin
 }
 
@@ -38,17 +38,18 @@ enum RequestStatus {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  name         String
-  email        String        @unique
-  password     String
-  role         Role          @default(user)
-  isVerified   Boolean       @default(false)
-  otp          String?
-  otpExpiresAt DateTime?
-  vehicles     Vehicle[]
-  slotRequests SlotRequest[]
-  logs         Log[]
+  id            Int           @id @default(autoincrement())
+  fname         String
+  lname         String
+  email         String        @unique
+  password      String
+  role          Role          @default(parking_attendant)
+  isVerified    Boolean       @default(false)
+  otp           String?
+  otpExpiresAt  DateTime?
+  vehicles      Vehicle[]
+  spaceRequests SlotRequest[]
+  logs          Log[]
 }
 
 model Vehicle {
@@ -69,6 +70,7 @@ model ParkingSlot {
   vehicleType  VehicleType
   status       SlotStatus    @default(available)
   location     String
+  costPerHour  Float        
   slotRequests SlotRequest[]
 }
 
@@ -82,10 +84,10 @@ model SlotRequest {
   slot          ParkingSlot?  @relation(fields: [slotId], references: [id])
   slotNumber    String?
   requestStatus RequestStatus @default(pending)
-  startTime     DateTime      // User-specified parking start time
-  endTime       DateTime      // User-specified parking end time
-  cost          Float?        // Calculated cost in FRW (300 FRW per 30 minutes)
-  approvedAt    DateTime?     // Approval timestamp
+  startTime     DateTime? // User-specified parking start time
+  endTime       DateTime? // User-specified parking end time
+  cost          Float? // Calculated cost in FRW (300 FRW per 30 minutes)
+  approvedAt    DateTime? // Approval timestamp
   createdAt     DateTime      @default(now())
 }
 

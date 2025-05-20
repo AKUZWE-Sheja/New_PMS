@@ -59,63 +59,67 @@ export const getUsers = async ({ page = 1, limit = 10, search = '' } = {}) => {
     return { data: response.data.data, meta: response.data.meta };
 };
 
-export const getVehicles = async ({ page = 1, limit = 10, search = '' } = {}) => {
-    const response = await api.get('/vehicles', { params: { page, limit, search } });
-    return { data: response.data.data, meta: response.data.meta };
+export const createVehicle = async ({ plateNumber, vehicleType, size }) => {
+  const response = await api.post('/vehicles', { plateNumber, vehicleType, size });
+  return response.data.data;
 };
 
-export const updateVehicle = async (id, { plateNumber, vehicleType, size, otherAttributes }) => {
-    const response = await api.put(`/vehicles/${id}`, {
-        plateNumber,
-        vehicleType,
-        size,
-        otherAttributes,
-    });
-    return response.data.data;
+export const getVehicles = async ({ page = 1, limit = 10, search = '' } = {}) => {
+  const response = await api.get('/vehicles', { params: { page, limit, search } });
+  return { data: response.data.data, meta: response.data.meta };
+};
+
+export const updateVehicle = async (id, { plateNumber, vehicleType, size }) => {
+  const response = await api.put(`/vehicles/${id}`, { plateNumber, vehicleType, size });
+  return response.data.data;
 };
 
 export const deleteVehicle = async (id) => {
-    await api.delete(`/vehicles/${id}`);
+  await api.delete(`/vehicles/${id}`);
 };
 
 export const createBulkParkingSlots = async (slots) => {
-    const response = await api.post('/parking-slots/bulk', { slots });
-    return response.data.data;
+  const response = await api.post('/parking-slots/bulk', { slots }); // Updated to /parking-slots
+  return response.data;
 };
 
 export const getParkingSlots = async ({ page = 1, limit = 10, search = '' } = {}) => {
-    const response = await api.get('/parking-slots', { params: { page, limit, search } });
-    return { data: response.data.data, meta: response.data.meta };
+  const response = await api.get('/parking-slots', { params: { page, limit, search } });
+  return { data: response.data.data, meta: response.data.meta };
 };
 
 export const updateParkingSlot = async (id, { slotNumber, size, vehicleType, location, status }) => {
-    const response = await api.put(`/parking-slots/${id}`, {
-        slotNumber,
-        size,
-        vehicleType,
-        location,
-        status,
-    });
-    return response.data.data;
+  const response = await api.put(`/parking-slots/${id}`, { slotNumber, size, vehicleType, location, status }); // Updated to /parking-slots
+  return response.data.data;
 };
 
 export const deleteParkingSlot = async (id) => {
-    await api.delete(`/parking-slots/${id}`);
+  await api.delete(`/parking-slots/${id}`); // Updated to /parking-slots
 };
 
 export const getSlotRequests = async ({ page = 1, limit = 10, search = '' } = {}) => {
-    const response = await api.get('/slot-requests', { params: { page, limit, search } });
-    return { data: response.data.data, meta: response.data.meta };
+  const response = await api.get('/slot-requests', { params: { page, limit, search } });
+  return { data: response.data.data, meta: response.data.meta };
+};
+
+export const createSlotRequest = async ({ vehicleId, startTime, endTime }) => {
+  const response = await api.post('/slot-requests', { vehicleId, startTime, endTime });
+  return response.data.data;
 };
 
 export const approveSlotRequest = async (id) => {
-    const response = await api.put(`/slot-requests/${id}/approve`);
-    return response.data.data;
+  const response = await api.post(`/slot-requests/${id}/approve`); // Changed to POST
+  return response.data.data;
 };
 
 export const rejectSlotRequest = async (id, reason) => {
-    const response = await api.put(`/slot-requests/${id}/reject`, { reason });
-    return response.data.data;
-  };
+  const response = await api.post(`/slot-requests/${id}/reject`, { reason }); // Changed to POST
+  return response.data.data;
+};
 
-
+// eslint-disable-next-line no-unused-vars
+const fetchOutgoingCars = async (from, to) => {
+  const res = await fetch(`/api/requests/outgoing?from=${from}&to=${to}`);
+  const { data } = await res.json();
+  return data;
+};

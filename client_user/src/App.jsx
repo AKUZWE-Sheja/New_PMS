@@ -1,5 +1,4 @@
 import { Route, Router, Routes } from 'react-router-dom'
-import LandingPage from './pages/LandingPage'
 import SignUp from './pages/Signup'
 import NotFound from './utils/not-found'
 import './constants/colors.css'

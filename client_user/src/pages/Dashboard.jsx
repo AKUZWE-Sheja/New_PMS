@@ -5,17 +5,18 @@ export default function Dashboard() {
 
   try {
     const storedUser = localStorage.getItem('user');
-    user = storedUser ? JSON.parse(storedUser) : {};
+    // Only parse if storedUser is truthy and not "undefined"
+    user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : {};
   } catch (error) {
     console.error("Error parsing user data from localStorage:", error);
     user = {};
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Welcome, {user.name}!</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Welcome, {user.name || "User" } !!</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-2">Manage Vehicles</h2>

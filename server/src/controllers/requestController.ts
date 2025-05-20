@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { ParkingCostCalculator } from '../utils/parkingCostCalculator';
-import { sendApprovalEmail, sendRejectionEmail } from '../utils/email';
+import { sendApprovalEmail, sendRejectionEmail, sendExitEmail } from '../utils/email';
 
 const prisma = new PrismaClient();
 
@@ -12,7 +12,7 @@ interface AuthRequest extends Request {
 // Create a slot request
 export const createRequest = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.user?.id;
-  const { vehicleId, startTime, endTime } = req.body;
+  const { vehicleId } = req.body;
 
   if (typeof userId !== 'number') {
     res.status(401).json({ error: 'Unauthorized: user ID missing' });
@@ -26,24 +26,10 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Validate startTime and endTime
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      res.status(400).json({ error: 'Invalid startTime or endTime' });
-      return;
-    }
-
-    // Calculate cost
-    const cost = ParkingCostCalculator.calculateCost(start, end);
-
     const request = await prisma.slotRequest.create({
       data: {
         userId,
         vehicleId,
-        startTime: start,
-        endTime: end,
-        cost,
         requestStatus: 'pending',
       },
     });
@@ -176,7 +162,19 @@ export const updateRequest = async (req: AuthRequest, res: Response): Promise<vo
         res.status(400).json({ error: 'Invalid startTime or endTime' });
         return;
       }
-      cost = ParkingCostCalculator.calculateCost(start, end);
+      // Find a compatible slot to get costPerHour
+      const slot = await prisma.parkingSlot.findFirst({
+        where: {
+          status: 'available',
+          vehicleType: vehicle.vehicleType,
+          size: vehicle.size,
+        },
+      });
+      if (!slot) {
+        res.status(400).json({ error: 'No compatible slots available' });
+        return;
+      }
+      cost = ParkingCostCalculator.calculateCost(start, end, slot.costPerHour);
     }
 
     const updatedRequest = await prisma.slotRequest.update({
@@ -226,6 +224,7 @@ export const deleteRequest = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 // Approve a slot request
+// server/src/controllers/requestController.ts
 export const approveRequest = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.user?.id;
   const { id } = req.params;
@@ -264,6 +263,7 @@ export const approveRequest = async (req: AuthRequest, res: Response): Promise<v
         slotId: slot.id,
         slotNumber: slot.slotNumber,
         approvedAt: new Date(),
+        startTime: new Date(),
       },
       include: {
         user: { select: { email: true } },
@@ -277,31 +277,18 @@ export const approveRequest = async (req: AuthRequest, res: Response): Promise<v
       data: { status: 'occupied' },
     });
 
-    if (updatedRequest.user?.email) {
-      const emailStatus = await sendApprovalEmail(
-        updatedRequest.user.email,
-        updatedRequest.slotNumber!,
-        updatedRequest.vehicle.plateNumber,
-        updatedRequest.startTime,
-        updatedRequest.endTime,
-        updatedRequest.cost!
-      );
-      if (emailStatus === 'failed') {
-        console.error(`Failed to send approval email for request ${id}`);
-        await prisma.log.create({
-          data: { userId, action: `Failed to send approval email for request ${id}` },
-        });
-      }
-    }
-
-    await prisma.log.create({
-      data: { userId, action: `Slot request ${id} approved for slot ${slot.slotNumber}` },
-    });
+  if (updatedRequest.user?.email) {
+    await sendApprovalEmail(
+      updatedRequest.user.email,
+      updatedRequest.slot?.slotNumber || '',
+      updatedRequest.vehicle?.plateNumber || ''
+    );
+  }
 
     res.json({ data: updatedRequest });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Approve error:', error);
+    res.status(500).json({ error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
   }
 };
 
@@ -346,6 +333,48 @@ export const rejectRequest = async (req: AuthRequest, res: Response): Promise<vo
     });
 
     res.json({ data: updatedRequest });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+export const exitRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    const request = await prisma.slotRequest.findUnique({
+      where: { id: parseInt(id, 10) },
+      include: { slot: true, user: true, vehicle: true },
+    });
+    if (!request || !request.startTime || !request.slot) {
+      res.status(404).json({ error: 'Request or slot not found, or not started' });
+      return;
+    }
+    const endTime = new Date();
+    const cost = ParkingCostCalculator.calculateCost(request.startTime, endTime, request.slot.costPerHour);
+
+    // Send exit email before deleting
+    if (request.user?.email) {
+      await sendExitEmail(
+        request.user.email,
+        request.slot.slotNumber,
+        request.vehicle?.plateNumber || '',
+        request.startTime,
+        endTime,
+        cost
+      );
+    }
+
+    await prisma.slotRequest.delete({
+      where: { id: parseInt(id, 10) },
+    });
+
+    await prisma.parkingSlot.update({
+      where: { id: request.slot.id },
+      data: { status: 'available' },
+    });
+
+    res.json({ data: { message: 'Exit processed and email sent' } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

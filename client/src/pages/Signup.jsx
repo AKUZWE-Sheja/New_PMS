@@ -10,12 +10,14 @@ export default function SignUp() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     api: "",
@@ -37,7 +39,7 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({ name: "", email: "", password: "", api: "" });
+    setErrors({ firstName: "", lastName: "", email: "", password: "", api: "" });
 
     const { isValid, error } = checkPasswordStrength(formData.password);
     if (!isValid) {
@@ -46,34 +48,37 @@ export default function SignUp() {
     }
 
     try {
-      const { userId } = await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
-      navigate("/dashboard", { state: { userId, email: formData.email } });
-    } catch (error) {
-      const errorMsg = error.response?.data?.error || "Sign-up failed. Please try again.";
-      setErrors((prev) => ({ ...prev, api: errorMsg }));
-    }
+  // Call register API 
+  const res = await register({ 
+    email: formData.email, 
+    password: formData.password,
+    fname: formData.firstName,
+    lname: formData.lastName,
+  });
+  // Redirect to OTP verification with userId and email
+  navigate("/verify-otp", { state: { userId: res.userId, email: formData.email } });
+} catch (error) {
+  const errorMsg = error.response?.data?.error || "Signup failed. Please try again.";
+  setErrors((prev) => ({ ...prev, api: errorMsg }));
+}
   };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-green-700 to-green-600">
       {/* Left Panel - Branding */}
       <div className="w-full md:w-2/5 flex items-center justify-center p-8 md:p-12 bg-green-700 rounded-br-3xl">
-              <div className="text-center md:text-left max-w-xs">
-                <div className="flex items-center justify-center mb-6">
-                  <FaCar className="text-white text-4xl mr-3" />
-                  <h1 className="text-4xl font-bold text-white">
-                    RRA<span className="text-amber-200"> PMS</span>
-                  </h1>
-                </div>
-                <p className="text-green-100 mt-4 text-lg">
-                  RRA Parking Management System
-                </p>
-              </div>
-            </div>
+        <div className="text-center md:text-left max-w-xs">
+          <div className="flex items-center justify-center mb-6">
+            <FaCar className="text-white text-4xl mr-3" />
+            <h1 className="text-4xl font-bold text-white">
+              XYZ<span className="text-amber-200"> PMS</span>
+            </h1>
+          </div>
+          <p className="text-green-100 mt-4 text-lg">
+            XYZ Parking Management System
+          </p>
+        </div>
+      </div>
 
       {/* Right Panel - Signup Form */}
       <div className="w-full md:w-3/5 bg-white rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
@@ -90,28 +95,53 @@ export default function SignUp() {
           </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
-                Full Name
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  className={`text-sm w-full px-4 py-3 pl-10 border ${
-                    errors.name ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white`}
-                  required
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUser className="h-5 w-5 text-gray-400" />
+            <div className="flex gap-4">
+              <div className="w-1/2">
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-600 mb-1">
+                  First Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="firstName"
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="John"
+                    className={`text-sm w-full px-4 py-3 pl-10 border ${
+                      errors.firstName ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white`}
+                    required
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUser className="h-5 w-5 text-gray-400" />
+                  </div>
                 </div>
+                <ErrorMessage message={errors.firstName} />
               </div>
-              <ErrorMessage message={errors.name} />
+              <div className="w-1/2">
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-600 mb-1">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="lastName"
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                    className={`text-sm w-full px-4 py-3 pl-10 border ${
+                      errors.lastName ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition bg-white`}
+                    required
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaUser className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+                <ErrorMessage message={errors.lastName} />
+              </div>
             </div>
 
             <div>
@@ -184,7 +214,7 @@ export default function SignUp() {
                 to="/login"
                 className="font-medium text-green-600 hover:text-green-500"
               >
-                Login here
+                Signup here
               </Link>
             </p>
           </div>

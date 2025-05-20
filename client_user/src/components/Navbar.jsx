@@ -3,7 +3,17 @@ import { logout } from '../services/api';
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  let user = {};
+  
+  try {
+    const storedUser = localStorage.getItem('user');
+    // Only parse if storedUser is truthy and not "undefined"
+    user = storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : {};
+  } catch (error) {
+    console.error("Error parsing user data from localStorage:", error);
+    user = {};
+  }
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {

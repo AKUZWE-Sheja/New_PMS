@@ -2,7 +2,7 @@ import { FaCar, FaEdit, FaTrash, FaSearch, FaChevronLeft, FaChevronRight, FaTime
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import Navbar from './Navbar';
-import { getVehicles, updateVehicle, deleteVehicle } from '../services/api';
+import { getVehicles, updateVehicle } from '../services/api';
 import ErrorMessage from '../utils/error-msg';
 import { sanitizeSearchInput, sanitizeSearchQuery } from '../utils/sanitization';
 
@@ -77,19 +77,19 @@ export default function Vehicles() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete vehicle?')) {
-      try {
-        await deleteVehicle(id);
-        setErrors({ api: '' });
-        fetchVehicles(search);
-        toast.success('Vehicle deleted successfully');
-      } catch (error) {
-        setErrors({ api: error.response?.data?.error || 'Failed to delete vehicle' });
-        toast.error(error.response?.data?.error || 'Failed to delete vehicle');
-      }
-    }
-  };
+  // const handleDelete = async (id) => {
+  //   if (window.confirm('Delete vehicle?')) {
+  //     try {
+  //       await deleteVehicle(id);
+  //       setErrors({ api: '' });
+  //       fetchVehicles(search);
+  //       toast.success('Vehicle deleted successfully');
+  //     } catch (error) {
+  //       setErrors({ api: error.response?.data?.error || 'Failed to delete vehicle' });
+  //       toast.error(error.response?.data?.error || 'Failed to delete vehicle');
+  //     }
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -150,9 +150,9 @@ export default function Vehicles() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Size
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -167,7 +167,7 @@ export default function Vehicles() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                         {v.size}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => setEditVehicle(v)}
                           className="text-green-600 hover:text-green-900 mr-4 inline-flex items-center"
@@ -182,7 +182,7 @@ export default function Vehicles() {
                           <FaTrash className="mr-1" />
                           Delete
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

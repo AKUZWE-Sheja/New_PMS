@@ -14,7 +14,8 @@ async function initializeDatabase(): Promise<void> {
       const hashedPassword = await bcrypt.hash('adminEdwige123!', 10);
       await prisma.user.create({
         data: {
-          name: 'Admin User',
+          fname: 'Admin',
+          lname: 'User',
           email: adminEmail,
           password: hashedPassword,
           role: 'admin',
@@ -47,6 +48,7 @@ async function initializeDatabase(): Promise<void> {
           vehicleType,
           location: 'West Wing',
           status: 'available',
+          costPerHour: 300,
         },
       });
       console.log('Sample parking slot created');

@@ -12,13 +12,21 @@ interface SlotInput {
   size: VehicleSize; // Use enum instead of string
   vehicleType: VehicleType; // Use enum instead of string
   location: string;
+  costPerHour: number;
 }
 
 export const bulkCreateSlots = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.user?.id;
-  const { slots }: { slots: SlotInput[] } = req.body;
+  let { slots }: { slots: SlotInput[] } = req.body;
 
-  // Validate enum values
+  // Normalize input to uppercase for enums
+  slots = slots.map(slot => ({
+    ...slot,
+    size: typeof slot.size === 'string' ? (slot.size.toUpperCase() as VehicleSize) : slot.size,
+    vehicleType: typeof slot.vehicleType === 'string' ? (slot.vehicleType.toUpperCase() as VehicleType) : slot.vehicleType,
+    costPerHour: Number(slot.costPerHour), 
+  }));
+
   const validSizes = ['SMALL', 'MEDIUM', 'LARGE'];
   const validVehicleTypes = ['CAR', 'TRUCK', 'MOTORBIKE', 'VAN'];
   for (const slot of slots) {
@@ -36,9 +44,10 @@ export const bulkCreateSlots = async (req: AuthRequest, res: Response): Promise<
     const createdSlots = await prisma.parkingSlot.createMany({
       data: slots.map(slot => ({
         slotNumber: slot.slotNumber,
-        size: slot.size as VehicleSize, // Type is already VehicleSize
-        vehicleType: slot.vehicleType as VehicleType, // Type is already VehicleType
+        size: slot.size as VehicleSize,
+        vehicleType: slot.vehicleType as VehicleType,
         location: slot.location,
+        costPerHour: slot.costPerHour,
         status: 'available',
       })),
     });
@@ -113,7 +122,11 @@ export const getSlots = async (req: AuthRequest, res: Response): Promise<void> =
 export const updateSlot = async (req: AuthRequest, res: Response): Promise<void> => {
   const userId = req.user?.id;
   const { id } = req.params;
-  const { slotNumber, size, vehicleType, location } = req.body;
+  let { slotNumber, size, vehicleType, location } = req.body;
+
+  // Normalize input to uppercase for enums
+  size = typeof size === 'string' ? size.toUpperCase() : size;
+  vehicleType = typeof vehicleType === 'string' ? vehicleType.toUpperCase() : vehicleType;
 
   // Validate enum values
   const validSizes = ['SMALL', 'MEDIUM', 'LARGE'];

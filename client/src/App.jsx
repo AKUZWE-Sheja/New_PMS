@@ -6,6 +6,7 @@ import ParkingSlots from './components/ParkingSlots';
 import SlotRequests from './components/SlotRequests';
 import ProtectedRoute from './components/ProtectedRoute';
 import SignUp from './pages/Signup';
+import SlotRequestForm from './components/SlotRequestForm';
 
 export default function App() {
   return (
@@ -41,6 +42,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <SlotRequests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/slot-requests/new"
+        element={
+          <ProtectedRoute>
+            <SlotRequestForm />
           </ProtectedRoute>
         }
       />

@@ -68,6 +68,7 @@ export default function ParkingSlots() {
         ...slot,
         slotNumber: sanitizeSearchInput(slot.slotNumber),
         location: sanitizeSearchInput(slot.location),
+        costPerHour: Number(slot.costPerHour),
       }));
       await createBulkParkingSlots(sanitizedForm);
       setSlotForm([]);
@@ -89,6 +90,7 @@ export default function ParkingSlots() {
         vehicleType: editSlot.vehicleType,
         location: sanitizeSearchInput(editSlot.location),
         status: editSlot.status,
+        costPerHour: Number(editSlot.costPerHour),
       });
       setEditSlot(null);
       setErrors({ api: '' });
@@ -115,7 +117,7 @@ export default function ParkingSlots() {
   };
 
   const addSlotForm = () => {
-    setSlotForm([...slotForm, { slotNumber: '', size: 'small', vehicleType: 'car', location: '' }]);
+    setSlotForm([...slotForm, { slotNumber: '', size: 'SMALL', vehicleType: 'CAR', location: '', costPerHour: '' }]);
   };
 
   const StatusBadge = ({ status }) => {
@@ -164,7 +166,7 @@ export default function ParkingSlots() {
                 placeholder="Search slots..."
                 value={search}
                 onChange={handleSearch}
-                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md bg-white shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"
               />
               {search && (
                 <button
@@ -186,9 +188,9 @@ export default function ParkingSlots() {
           </div>
           <form onSubmit={handleBulkSubmit} className="px-4 py-5 sm:p-6 space-y-4">
             {slotForm.map((slot, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Slot Number</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slot Name</label>
                   <input
                     type="text"
                     placeholder="A-101"
@@ -213,9 +215,9 @@ export default function ParkingSlots() {
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
+                    <option value="SMALL">Small</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LARGE">Large</option>
                   </select>
                 </div>
                 <div>
@@ -229,9 +231,9 @@ export default function ParkingSlots() {
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value="car">Car</option>
-                    <option value="truck">Truck</option>
-                    <option value="motorcycle">Motorcycle</option>
+                    <option value="CAR">Car</option>
+                    <option value="TRUCK">Truck</option>
+                    <option value="MOTORCYCLE">Motorcycle</option>
                   </select>
                 </div>
                 <div>
@@ -243,6 +245,23 @@ export default function ParkingSlots() {
                     onChange={(e) => {
                       const newForm = [...slotForm];
                       newForm[index].location = e.target.value;
+                      setSlotForm(newForm);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost Per Hour (FRW)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g. 500"
+                    value={slot.costPerHour}
+                    onChange={(e) => {
+                      const newForm = [...slotForm];
+                      newForm[index].costPerHour = e.target.value;
                       setSlotForm(newForm);
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
@@ -299,7 +318,7 @@ export default function ParkingSlots() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Slot Number
+                      Slot Name
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Size
@@ -309,6 +328,9 @@ export default function ParkingSlots() {
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Location
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cost/Hour
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -332,6 +354,9 @@ export default function ParkingSlots() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {s.location}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {s.costPerHour}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <StatusBadge status={s.status} />
@@ -443,9 +468,9 @@ export default function ParkingSlots() {
                     onChange={(e) => setEditSlot({ ...editSlot, size: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
+                    <option value="SMALL">Small</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LARGE">Large</option>
                   </select>
                 </div>
                 <div>
@@ -458,9 +483,9 @@ export default function ParkingSlots() {
                     onChange={(e) => setEditSlot({ ...editSlot, vehicleType: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                   >
-                    <option value="car">Car</option>
-                    <option value="truck">Truck</option>
-                    <option value="motorcycle">Motorcycle</option>
+                    <option value="CAR">Car</option>
+                    <option value="TRUCK">Truck</option>
+                    <option value="MOTORCYCLE">Motorcycle</option>
                   </select>
                 </div>
                 <div>
@@ -472,6 +497,21 @@ export default function ParkingSlots() {
                     id="location"
                     value={editSlot.location}
                     onChange={(e) => setEditSlot({ ...editSlot, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="costPerHour" className="block text-sm font-medium text-gray-700 mb-1">
+                    Cost Per Hour (FRW)
+                  </label>
+                  <input
+                    type="number"
+                    id="costPerHour"
+                    min="0"
+                    step="0.01"
+                    value={editSlot.costPerHour}
+                    onChange={(e) => setEditSlot({ ...editSlot, costPerHour: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                     required
                   />

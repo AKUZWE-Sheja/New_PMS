@@ -83,11 +83,11 @@ export default function Login() {
           <div className="flex items-center justify-center mb-6">
             <FaCar className="text-white text-4xl mr-3" />
             <h1 className="text-4xl font-bold text-white">
-              RRA<span className="text-amber-200"> PMS</span>
+              XYZ<span className="text-amber-200"> PMS</span>
             </h1>
           </div>
           <p className="text-green-100 mt-4 text-lg">
-            RRA Parking Management System
+            XYZ Parking Management System
           </p>
         </div>
       </div>
@@ -225,7 +225,7 @@ export default function Login() {
           {/* Sign up link */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
-              New to RRA PMS?{' '}
+              New to XYZ PMS?{' '}
               <Link to="/signup" className="font-medium text-green-600 hover:text-green-500 inline-flex items-center">
                 <FaUserPlus className="mr-1" />
                 Sign up
