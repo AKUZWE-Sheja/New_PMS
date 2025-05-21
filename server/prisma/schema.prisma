@@ -29,6 +29,7 @@ enum SlotStatus {
   available
   occupied
   reserved
+  completed
 }
 
 enum RequestStatus {

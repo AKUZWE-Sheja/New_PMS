@@ -239,7 +239,7 @@ export default function Signup() {
                 to="/login"
                 className="text-green-800 hover:text-green-700 font-medium"
               >
-                Signup
+                Login
               </Link>
             </p>
           </div>

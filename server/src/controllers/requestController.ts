@@ -380,3 +380,56 @@ export const exitRequest = async (req: AuthRequest, res: Response): Promise<void
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+export const markCarExit = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.user?.id;
+  const { id } = req.params;
+
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    return;
+  }
+
+  try {
+    const request = await prisma.slotRequest.findFirst({
+      where: { id: parseInt(id, 10), requestStatus: 'approved' },
+      include: { vehicle: true, user: true, slot: true },
+    });
+    if (!request) {
+      res.status(404).json({ error: 'Approved request not found' });
+      return;
+    }
+    if (!request.slot || request.slot.status !== 'occupied') {
+      res.status(400).json({ error: 'Slot is not occupied' });
+      return;
+    }
+
+    // Update slot to available
+    await prisma.parkingSlot.update({
+      where: { id: request.slotId! },
+      data: { status: 'available' },
+    });
+
+    // Update request endTime
+    const updatedRequest = await prisma.slotRequest.update({
+      where: { id: parseInt(id, 10) },
+      data: { endTime: new Date() },
+      include: { user: true, vehicle: true, slot: true },
+    });
+
+    // Log car exit in Log table
+    await prisma.log.create({
+      data: {
+        userId: userId!,
+        action: `Car exited slot ${request.slotNumber} for request ${id}, vehicle ${request.vehicle.plateNumber} at ${new Date().toLocaleString()}`,
+      },
+    });
+
+    console.log(`Car exit logged for request ${id}, slot ${request.slotNumber}, vehicle ${request.vehicle.plateNumber}`);
+
+    res.json({ data: updatedRequest });
+  } catch (error) {
+    console.error('Car exit error:', error);
+    res.status(500).json({ error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}` });
+  }
+};

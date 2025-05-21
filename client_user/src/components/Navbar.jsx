@@ -33,7 +33,7 @@ export default function Navbar() {
           <Link to="/parking-slots" className="hover:text-gray-200">Parking Slots</Link>
           <Link to="/slot-requests" className="hover:text-gray-200">Slot Requests</Link>
           {user.role === 'admin' && (
-            <Link to="/admin" className="hover:text-gray-200">Admin</Link>
+            <Link to="http://localhost:3000/login" className="hover:text-gray-200">Admin</Link>
           )}
           <button
             onClick={handleLogout}
